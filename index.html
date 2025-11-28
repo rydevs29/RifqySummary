@@ -9,13 +9,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body { background-color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; color: #f8fafc; }
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         .gradient-text { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3b82f6; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Custom Range Slider Styling (for percentage control) */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -6px; 
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 4px;
+            background: #475569;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -38,30 +54,44 @@
     <!-- MAIN -->
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
         
-        <!-- LEFT: INPUT AREA -->
+        <!-- LEFT: INPUT AREA & CONTROLS -->
         <div class="flex-1 flex flex-col p-6 bg-[#0b1120] border-r border-slate-800 relative">
             
-            <div class="mb-4">
+            <div class="flex-1 flex flex-col min-h-0">
                 <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Input (Link / Teks)</label>
-                <div class="relative">
-                    <textarea id="inputData" class="w-full h-[calc(100vh-200px)] bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none text-slate-200 resize-none placeholder-slate-600 transition-all" 
-                    placeholder="Tempel Link YouTube di sini, atau tempel teks panjang secara langsung..."></textarea>
+                <div class="relative flex-1">
+                    <textarea id="inputData" class="w-full h-full bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none text-slate-200 resize-none placeholder-slate-600 transition-all" 
+                    placeholder="Tempel Link YouTube/Sosial Media di sini, atau tempel teks panjang secara langsung..."></textarea>
                     
                     <!-- Floating Action Button inside textarea -->
                     <div class="absolute bottom-4 right-4 flex gap-2">
                         <span id="typeBadge" class="hidden px-3 py-1.5 bg-slate-700 text-xs rounded text-slate-300 border border-slate-600">
                             <i class="fa-brands fa-youtube text-red-500 mr-1"></i> Video Detected
                         </span>
-                        <button onclick="clearInput()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs rounded text-white border border-slate-600 transition">
+                        <button onclick="clearInput()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs rounded text-white border border-slate-600 transition" title="Bersihkan input">
                             Clear
                         </button>
                     </div>
                 </div>
             </div>
 
-            <button onclick="startProcessing()" id="processBtn" class="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Analisis & Ringkas
-            </button>
+            <!-- ACTION BAR & PERCENTAGE CONTROL (Updated to vertical stack) -->
+            <div class="mt-4 pt-4 border-t border-slate-800 flex flex-col gap-4">
+                
+                <!-- Percentage Slider (Full Width) -->
+                <div class="flex flex-col gap-1 w-full">
+                    <label class="text-xs text-slate-400 font-medium">Target Ringkasan:</label>
+                    <div class="flex items-center gap-3">
+                        <input type="range" id="summaryRatio" min="10" max="80" value="30" class="flex-1 h-1 appearance-none cursor-pointer">
+                        <span id="ratioLabel" class="text-sm font-bold text-blue-400 w-8">30%</span>
+                    </div>
+                </div>
+                
+                <!-- Process Button (Full Width, now below the slider) -->
+                <button onclick="startProcessing()" id="processBtn" class="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Analisis & Ringkas
+                </button>
+            </div>
         </div>
 
         <!-- RIGHT: OUTPUT AREA -->
@@ -93,14 +123,15 @@
                 
                 <!-- Copy Button (Hover) -->
                 <button onclick="copyResult()" class="absolute top-4 right-4 bg-slate-800/80 hover:bg-slate-700 text-white p-2 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition shadow-lg border border-slate-700">
-                    <i class="fa-regular fa-copy"></i>
+                    <i class="fa-regular fa-copy"></i> Salin
                 </button>
             </div>
 
             <!-- Footer Stats -->
             <div class="mt-4 flex gap-3 text-[10px] text-slate-500 font-mono">
-                <div class="bg-slate-800 px-2 py-1 rounded">Words: <span id="statWords" class="text-blue-400">0</span></div>
-                <div class="bg-slate-800 px-2 py-1 rounded">Source: <span id="statSource" class="text-violet-400">-</span></div>
+                <div class="bg-slate-800 px-2 py-1 rounded">Kata Asli: <span id="statOriginalWords" class="text-blue-400">0</span></div>
+                <div class="bg-slate-800 px-2 py-1 rounded">Kata Ringkas: <span id="statSummaryWords" class="text-emerald-400">0</span></div>
+                <div class="bg-slate-800 px-2 py-1 rounded">Sumber: <span id="statSource" class="text-violet-400">-</span></div>
             </div>
         </div>
 
@@ -109,20 +140,31 @@
     <script>
         // DOM Elements
         const inputData = document.getElementById('inputData');
-        const processBtn = document.getElementById('processBtn');
         const loader = document.getElementById('loader');
         const loadingText = document.getElementById('loadingText');
         const resultText = document.getElementById('resultText');
         const placeholder = document.getElementById('placeholder');
         const typeBadge = document.getElementById('typeBadge');
         const methodBadge = document.getElementById('methodBadge');
+        const summaryRatio = document.getElementById('summaryRatio');
+        const ratioLabel = document.getElementById('ratioLabel');
+        const statOriginalWords = document.getElementById('statOriginalWords');
 
         // Regex Detection
         const youtubeRegex = /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/;
 
-        // Event Listener: Detect Link Type
+        // --- UI & Utility Functions ---
+
+        // Update Ratio Label & Word Count
+        summaryRatio.addEventListener('input', (e) => {
+            ratioLabel.innerText = e.target.value + '%';
+        });
+
         inputData.addEventListener('input', () => {
             const val = inputData.value.trim();
+            const words = val.split(/\s+/).filter(w => w.length > 0).length;
+            statOriginalWords.innerText = words;
+
             if (youtubeRegex.test(val)) {
                 typeBadge.classList.remove('hidden');
                 typeBadge.innerHTML = '<i class="fa-brands fa-youtube text-red-500 mr-1"></i> YouTube Link';
@@ -137,11 +179,29 @@
         function clearInput() {
             inputData.value = '';
             typeBadge.classList.add('hidden');
+            statOriginalWords.innerText = '0';
         }
+
+        function copyResult() {
+            const text = resultText.innerText;
+            if (text.length > 0) {
+                // Menggunakan document.execCommand('copy') karena navigator.clipboard.writeText() 
+                // mungkin dibatasi di lingkungan iframe.
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = text;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+                alert("Ringkasan berhasil disalin!");
+            }
+        }
+        
+        // --- Core Processing Logic ---
 
         async function startProcessing() {
             const input = inputData.value.trim();
-            if (!input) return alert("Masukkan Link YouTube atau Teks!");
+            if (!input) { console.log("Input Kosong"); return alert("Masukkan Link YouTube atau Teks!"); }
 
             // UI Reset
             loader.classList.remove('hidden');
@@ -153,46 +213,54 @@
             let source = "Manual Text";
 
             try {
-                // 1. CEK APAKAH INI URL YOUTUBE?
+                // 1. CEK APAKAH INI URL YOUTUBE? (Proses Transkrip via Vercel)
                 if (youtubeRegex.test(input)) {
                     loadingText.innerText = "Mengambil Transkrip YouTube (Vercel)...";
                     source = "YouTube";
                     
-                    try {
-                        const transcriptRes = await fetch('/api/transcript', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url: input })
-                        });
-                        
-                        const transcriptData = await transcriptRes.json();
-                        
-                        if (!transcriptRes.ok) throw new Error("Gagal ambil transkrip");
-                        textToSummarize = transcriptData.text; // Update teks dengan hasil transkrip
-                        
-                    } catch (err) {
-                        console.warn("YouTube Fetch Failed:", err);
-                        alert("Gagal mengambil transkrip otomatis (IP Server mungkin diblokir YouTube). Silakan salin transkrip secara manual.");
-                        loader.classList.add('hidden');
-                        return; // Stop process, ask user manual input
-                    }
+                    const transcriptRes = await fetch('/api/transcript', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: input })
+                    });
+                    
+                    const transcriptData = await transcriptRes.json();
+                    
+                    if (!transcriptRes.ok) throw new Error("Gagal ambil transkrip");
+                    textToSummarize = transcriptData.text; // Dapatkan teks transkrip
                 }
 
                 // 2. KIRIM KE AI SERVER (VERCEL -> HUGGING FACE)
                 loadingText.innerText = "Menganalisis dengan AI...";
                 
-                const aiRes = await fetch('/api/summarize', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: textToSummarize })
-                });
+                // Gunakan exponential backoff jika terjadi kegagalan fetch
+                const maxRetries = 3;
+                let aiData;
+                let aiRes;
 
-                const aiData = await aiRes.json();
-
-                if (!aiRes.ok || aiData.fallback) {
-                    throw new Error("AI Server Busy");
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        aiRes = await fetch('/api/summarize', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: textToSummarize })
+                        });
+                        aiData = await aiRes.json();
+                        
+                        if (aiRes.ok && !aiData.fallback) {
+                            break; // Success
+                        } else {
+                            throw new Error("AI Server Busy or Rate Limited");
+                        }
+                    } catch (e) {
+                        if (i === maxRetries - 1) throw e;
+                        const delay = Math.pow(2, i) * 1000;
+                        console.log(`Retrying AI in ${delay}ms...`);
+                        loadingText.innerText = `AI sibuk. Mencoba ulang dalam ${delay/1000} detik...`;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
                 }
-
+                
                 // SUKSES AI SERVER
                 showResult(aiData.summary, "AI Server (BART-Large)", "bg-blue-500/10 text-blue-400 border-blue-500/30", source);
 
@@ -201,10 +269,11 @@
                 console.warn("Switching to Local Mode:", error);
                 loadingText.innerText = "Server Sibuk/Limit. Menggunakan Mode Offline...";
                 
-                // Beri jeda sedikit agar user sadar ada peralihan
+                // Beri jeda agar terasa proses beralih ke cadangan
                 setTimeout(() => {
-                    const localSummary = generateSummaryLocal(textToSummarize);
-                    showResult(localSummary, "Offline Mode (JS Algorithm)", "bg-orange-500/10 text-orange-400 border-orange-500/30", source);
+                    const ratio = parseInt(summaryRatio.value); // Ambil persentase dari slider
+                    const localSummary = generateSummaryLocal(textToSummarize, ratio);
+                    showResult(localSummary, `Offline Mode (JS - ${ratio}%)`, "bg-orange-500/10 text-orange-400 border-orange-500/30", source);
                 }, 1000);
             }
         }
@@ -218,22 +287,17 @@
             methodBadge.innerText = method;
             methodBadge.classList.remove('hidden');
 
-            document.getElementById('statWords').innerText = text.split(" ").length;
+            document.getElementById('statSummaryWords').innerText = text.split(/\s+/).filter(w => w.length > 0).length;
             document.getElementById('statSource').innerText = sourceName;
         }
 
-        function copyResult() {
-            navigator.clipboard.writeText(resultText.innerText);
-            alert("Disalin!");
-        }
-
         // --- ALGORITMA PERINGKAS OFFLINE (BACKUP TERAKHIR) ---
-        function generateSummaryLocal(text) {
+        function generateSummaryLocal(text, percentage) {
             // Pembersihan dasar
             const cleanText = text.replace(/\[.*?\]/g, ""); 
             const sentences = cleanText.match(/[^\.!\?]+[\.!\?]+/g) || [cleanText];
             
-            if (sentences.length < 3) return cleanText.substring(0, 500) + "... (Teks terlalu pendek)";
+            if (sentences.length < 3) return cleanText.substring(0, 500) + " (Teks terlalu pendek untuk diringkas)";
 
             const words = cleanText.toLowerCase().match(/\b\w+\b/g);
             const wordFreq = {};
@@ -257,8 +321,8 @@
                 return { text: sentence.trim(), score: score / (sentenceWords.length || 1), index };
             });
 
-            // Ambil 30% kalimat dengan skor tertinggi
-            const threshold = Math.max(1, Math.floor(sentences.length * 0.3));
+            // Ambil N% kalimat dengan skor tertinggi
+            const threshold = Math.max(1, Math.floor(sentences.length * (percentage / 100)));
             const topSentences = sentenceScores.sort((a, b) => b.score - a.score).slice(0, threshold);
 
             // Urutkan kembali sesuai posisi asli agar nyambung
@@ -267,5 +331,4 @@
     </script>
 </body>
 </html>
-
 
