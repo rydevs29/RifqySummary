@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RifqySummary | AI & Link Summarizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; color: #f8fafc; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .gradient-text { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3b82f6; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- HEADER -->
+    <header class="h-16 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between px-6 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <h1 class="font-bold text-lg tracking-tight">Rifqy<span class="gradient-text">Summary</span></h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="statusIndicator" class="flex items-center gap-2 text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 border border-slate-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> System Ready
+            </span>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- LEFT: INPUT AREA -->
+        <div class="flex-1 flex flex-col p-6 bg-[#0b1120] border-r border-slate-800 relative">
+            
+            <div class="mb-4">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Input (Link / Teks)</label>
+                <div class="relative">
+                    <textarea id="inputData" class="w-full h-[calc(100vh-200px)] bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-sm focus:border-blue-500 focus:outline-none text-slate-200 resize-none placeholder-slate-600 transition-all" 
+                    placeholder="Tempel Link YouTube di sini, atau tempel teks panjang secara langsung..."></textarea>
+                    
+                    <!-- Floating Action Button inside textarea -->
+                    <div class="absolute bottom-4 right-4 flex gap-2">
+                        <span id="typeBadge" class="hidden px-3 py-1.5 bg-slate-700 text-xs rounded text-slate-300 border border-slate-600">
+                            <i class="fa-brands fa-youtube text-red-500 mr-1"></i> Video Detected
+                        </span>
+                        <button onclick="clearInput()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs rounded text-white border border-slate-600 transition">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="startProcessing()" id="processBtn" class="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Analisis & Ringkas
+            </button>
+        </div>
+
+        <!-- RIGHT: OUTPUT AREA -->
+        <div class="flex-1 flex flex-col p-6 bg-[#0f172a] relative">
+            
+            <!-- Header Output -->
+            <div class="flex justify-between items-center mb-4">
+                <label class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Hasil Ringkasan</label>
+                <div id="methodBadge" class="hidden text-[10px] px-2 py-1 rounded border"></div>
+            </div>
+
+            <!-- Content Output -->
+            <div id="outputContainer" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl p-6 overflow-y-auto relative group">
+                
+                <!-- Placeholder -->
+                <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-600 opacity-60">
+                    <i class="fa-regular fa-file-lines text-4xl mb-3"></i>
+                    <p class="text-xs">Hasil akan muncul di sini</p>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loader" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 z-20 backdrop-blur-sm">
+                    <div class="loader mb-4"></div>
+                    <p id="loadingText" class="text-xs text-blue-400 font-mono animate-pulse">Menghubungkan ke Server...</p>
+                </div>
+
+                <!-- Result Text -->
+                <div id="resultText" class="text-slate-300 text-sm leading-7 hidden pb-10"></div>
+                
+                <!-- Copy Button (Hover) -->
+                <button onclick="copyResult()" class="absolute top-4 right-4 bg-slate-800/80 hover:bg-slate-700 text-white p-2 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition shadow-lg border border-slate-700">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+
+            <!-- Footer Stats -->
+            <div class="mt-4 flex gap-3 text-[10px] text-slate-500 font-mono">
+                <div class="bg-slate-800 px-2 py-1 rounded">Words: <span id="statWords" class="text-blue-400">0</span></div>
+                <div class="bg-slate-800 px-2 py-1 rounded">Source: <span id="statSource" class="text-violet-400">-</span></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // DOM Elements
+        const inputData = document.getElementById('inputData');
+        const processBtn = document.getElementById('processBtn');
+        const loader = document.getElementById('loader');
+        const loadingText = document.getElementById('loadingText');
+        const resultText = document.getElementById('resultText');
+        const placeholder = document.getElementById('placeholder');
+        const typeBadge = document.getElementById('typeBadge');
+        const methodBadge = document.getElementById('methodBadge');
+
+        // Regex Detection
+        const youtubeRegex = /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/;
+
+        // Event Listener: Detect Link Type
+        inputData.addEventListener('input', () => {
+            const val = inputData.value.trim();
+            if (youtubeRegex.test(val)) {
+                typeBadge.classList.remove('hidden');
+                typeBadge.innerHTML = '<i class="fa-brands fa-youtube text-red-500 mr-1"></i> YouTube Link';
+            } else if (val.length > 0) {
+                typeBadge.classList.remove('hidden');
+                typeBadge.innerHTML = '<i class="fa-solid fa-align-left text-slate-400 mr-1"></i> Teks Manual';
+            } else {
+                typeBadge.classList.add('hidden');
+            }
+        });
+
+        function clearInput() {
+            inputData.value = '';
+            typeBadge.classList.add('hidden');
+        }
+
+        async function startProcessing() {
+            const input = inputData.value.trim();
+            if (!input) return alert("Masukkan Link YouTube atau Teks!");
+
+            // UI Reset
+            loader.classList.remove('hidden');
+            resultText.classList.add('hidden');
+            placeholder.classList.add('hidden');
+            methodBadge.classList.add('hidden');
+            
+            let textToSummarize = input;
+            let source = "Manual Text";
+
+            try {
+                // 1. CEK APAKAH INI URL YOUTUBE?
+                if (youtubeRegex.test(input)) {
+                    loadingText.innerText = "Mengambil Transkrip YouTube (Vercel)...";
+                    source = "YouTube";
+                    
+                    try {
+                        const transcriptRes = await fetch('/api/transcript', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: input })
+                        });
+                        
+                        const transcriptData = await transcriptRes.json();
+                        
+                        if (!transcriptRes.ok) throw new Error("Gagal ambil transkrip");
+                        textToSummarize = transcriptData.text; // Update teks dengan hasil transkrip
+                        
+                    } catch (err) {
+                        console.warn("YouTube Fetch Failed:", err);
+                        alert("Gagal mengambil transkrip otomatis (IP Server mungkin diblokir YouTube). Silakan salin transkrip secara manual.");
+                        loader.classList.add('hidden');
+                        return; // Stop process, ask user manual input
+                    }
+                }
+
+                // 2. KIRIM KE AI SERVER (VERCEL -> HUGGING FACE)
+                loadingText.innerText = "Menganalisis dengan AI...";
+                
+                const aiRes = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: textToSummarize })
+                });
+
+                const aiData = await aiRes.json();
+
+                if (!aiRes.ok || aiData.fallback) {
+                    throw new Error("AI Server Busy");
+                }
+
+                // SUKSES AI SERVER
+                showResult(aiData.summary, "AI Server (BART-Large)", "bg-blue-500/10 text-blue-400 border-blue-500/30", source);
+
+            } catch (error) {
+                // 3. FALLBACK: ALGORITMA LOKAL (JS)
+                console.warn("Switching to Local Mode:", error);
+                loadingText.innerText = "Server Sibuk/Limit. Menggunakan Mode Offline...";
+                
+                // Beri jeda sedikit agar user sadar ada peralihan
+                setTimeout(() => {
+                    const localSummary = generateSummaryLocal(textToSummarize);
+                    showResult(localSummary, "Offline Mode (JS Algorithm)", "bg-orange-500/10 text-orange-400 border-orange-500/30", source);
+                }, 1000);
+            }
+        }
+
+        function showResult(text, method, badgeClass, sourceName) {
+            loader.classList.add('hidden');
+            resultText.innerHTML = text.replace(/\. /g, '.<br><br>');
+            resultText.classList.remove('hidden');
+            
+            methodBadge.className = `text-[10px] px-2 py-1 rounded border ${badgeClass}`;
+            methodBadge.innerText = method;
+            methodBadge.classList.remove('hidden');
+
+            document.getElementById('statWords').innerText = text.split(" ").length;
+            document.getElementById('statSource').innerText = sourceName;
+        }
+
+        function copyResult() {
+            navigator.clipboard.writeText(resultText.innerText);
+            alert("Disalin!");
+        }
+
+        // --- ALGORITMA PERINGKAS OFFLINE (BACKUP TERAKHIR) ---
+        function generateSummaryLocal(text) {
+            // Pembersihan dasar
+            const cleanText = text.replace(/\[.*?\]/g, ""); 
+            const sentences = cleanText.match(/[^\.!\?]+[\.!\?]+/g) || [cleanText];
+            
+            if (sentences.length < 3) return cleanText.substring(0, 500) + "... (Teks terlalu pendek)";
+
+            const words = cleanText.toLowerCase().match(/\b\w+\b/g);
+            const wordFreq = {};
+            const stopWords = ["dan", "yang", "di", "ke", "dari", "ini", "itu", "adalah", "untuk", "dengan", "saya", "kamu", "kita", "mereka", "juga", "pada", "the", "and", "of", "to", "a", "in", "is", "that", "for"];
+
+            // Hitung frekuensi kata
+            words.forEach(word => {
+                if (!stopWords.includes(word) && word.length > 3) {
+                    wordFreq[word] = (wordFreq[word] || 0) + 1;
+                }
+            });
+
+            // Beri skor kalimat
+            const sentenceScores = sentences.map((sentence, index) => {
+                let score = 0;
+                const sentenceWords = sentence.toLowerCase().match(/\b\w+\b/g) || [];
+                sentenceWords.forEach(word => {
+                    if (wordFreq[word]) score += wordFreq[word];
+                });
+                // Normalisasi skor (Skor dibagi jumlah kata agar kalimat panjang tidak bias)
+                return { text: sentence.trim(), score: score / (sentenceWords.length || 1), index };
+            });
+
+            // Ambil 30% kalimat dengan skor tertinggi
+            const threshold = Math.max(1, Math.floor(sentences.length * 0.3));
+            const topSentences = sentenceScores.sort((a, b) => b.score - a.score).slice(0, threshold);
+
+            // Urutkan kembali sesuai posisi asli agar nyambung
+            return topSentences.sort((a, b) => a.index - b.index).map(s => s.text).join(' ');
+        }
+    </script>
+</body>
+</html>
+
+
